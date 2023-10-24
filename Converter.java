@@ -91,7 +91,7 @@ public class Converter implements KeyEventListener {
       listener.onCharEntered(unconfirmedString.charAt(unconfirmedString.length() - 1));
       isReadyToConvert = true;
     }
-    if(e.type == KeyEventType.SWIPE_END && isReadyToConvert) {
+    if (e.type == KeyEventType.SWIPE_END && isReadyToConvert) {
       beginConvert();
     }
   }
@@ -172,6 +172,7 @@ public class Converter implements KeyEventListener {
     }
 
     convertResult = JSONArray.parse(sb.toString());
+    System.out.println(sb.toString());
     if (convertResult == null) {
       endConvert();
       // doesConvert = false;
@@ -261,6 +262,12 @@ public class Converter implements KeyEventListener {
     }
 
     // TODO: 候補ウィンドウも描画
+    if (bunsetsuList.isEmpty()) return;
+    float candWindowStartX = Math.max(0, p.x);
+    for (String c : bunsetsuList.get(focusedPos).getAllCandidates()) {
+      context.text(c, candWindowStartX, p.y + 25);
+      candWindowStartX += (targetEditor.getFont().getSize() * c.length()) + 5;
+    }
   }
 
   void setEditable(Editable e) {
@@ -303,5 +310,9 @@ class Bunsetsu {
 
   public String getCurrentString() {
     return currentString;
+  }
+
+  public List<String> getAllCandidates() {
+    return candidates;
   }
 }

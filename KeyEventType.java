@@ -1,3 +1,6 @@
 enum KeyEventType {
-  KEY_DOWN, SWIPE_BEGIN, SWIPE_END;
+
+  KEY_DOWN, // スワイプ開始
+  SWIPE_BEGIN, // 動き始め
+  SWIPE_END; // マウスアップ
 }

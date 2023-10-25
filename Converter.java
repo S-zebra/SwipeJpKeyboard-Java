@@ -6,8 +6,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,6 +68,7 @@ public class Converter implements KeyEventListener {
    */
   private final PApplet context;
 
+  private ConversionStrip strip;
 
   Converter(PApplet context) {
     unconfirmedString = new StringBuilder();
@@ -91,7 +96,7 @@ public class Converter implements KeyEventListener {
       listener.onCharEntered(unconfirmedString.charAt(unconfirmedString.length() - 1));
       isReadyToConvert = true;
     }
-    if(e.type == KeyEventType.SWIPE_END && isReadyToConvert) {
+    if (e.type == KeyEventType.SWIPE_END && isReadyToConvert) {
       beginConvert();
     }
   }
@@ -172,6 +177,7 @@ public class Converter implements KeyEventListener {
     }
 
     convertResult = JSONArray.parse(sb.toString());
+    System.out.println(sb.toString());
     if (convertResult == null) {
       endConvert();
       // doesConvert = false;
@@ -193,6 +199,7 @@ public class Converter implements KeyEventListener {
 
     listener.onStringChanged(previousStrLength, getCvtString());
     unconfirmedString = new StringBuilder();
+    strip = new ConversionStrip(bunsetsuList.get(0).getAllCandidates(), context);
     // 1文字変換フラグOff
     // doesConvert = false
   }
@@ -212,6 +219,7 @@ public class Converter implements KeyEventListener {
       confirmedString.append(b.getCurrentString());
     }
     bunsetsuList.clear();
+    strip.setCandidates(Collections.emptyList());
     focusedPos = 0;
     isReadyToConvert = false;
   }
@@ -219,12 +227,14 @@ public class Converter implements KeyEventListener {
   void nextConvPart() {
     if (focusedPos < convertResult.size() - 1) {
       focusedPos++;
+      strip.setCandidates(bunsetsuList.get(focusedPos).getAllCandidates());
     }
   }
 
   void prevConvPart() {
     if (focusedPos >= 1) {
       focusedPos--;
+      strip.setCandidates(bunsetsuList.get(focusedPos).getAllCandidates());
     }
   }
 
@@ -235,6 +245,7 @@ public class Converter implements KeyEventListener {
     fBunsetsu.nextCandidate();
     String newString = getCvtString();
     listener.onStringChanged(lastStringLen, newString);
+    strip.focusNext();
   }
 
   void prevCandidate() {
@@ -243,6 +254,7 @@ public class Converter implements KeyEventListener {
     fBunsetsu.prevCandidate();
     String newString = getCvtString();
     listener.onStringChanged(lastStringLen, newString);
+    strip.focusPrev();
   }
 
   void draw() { //線だけ
@@ -260,7 +272,8 @@ public class Converter implements KeyEventListener {
       }
     }
 
-    // TODO: 候補ウィンドウも描画
+    if (!isConverting()) return;
+    strip.draw(new Point(Math.max(0, p.x), p.y + 32));
   }
 
   void setEditable(Editable e) {
@@ -303,5 +316,9 @@ class Bunsetsu {
 
   public String getCurrentString() {
     return currentString;
+  }
+
+  public List<String> getAllCandidates() {
+    return candidates;
   }
 }

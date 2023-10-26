@@ -13,6 +13,8 @@ public class ConversionStrip {
   private final PFont stripFont;
   private final PFont stripSubFont;
 
+  private float xOffset = 0;
+
   private static class Item {
     private final String text;
     private final int number;
@@ -94,9 +96,16 @@ public class ConversionStrip {
 
   public void draw(Point point) {
     float curWidth = 5; // padding-left
+
+    Point offsetPt = new Point(point.x, point.y); // make point mutable
+    if (point.x + dimension.width >= context.width) {
+      offsetPt.x -= (point.x + dimension.width) - context.width;
+      offsetPt.x = Math.max(0, offsetPt.x);
+    }
+
     context.textFont(stripFont);
     for (int i = 0; i < items.size(); i++) {
-      Point newPt = new Point(point.x + curWidth, point.y);
+      Point newPt = new Point(offsetPt.x + curWidth, offsetPt.y);
       items.get(i).draw(newPt, stripFont);
       curWidth += items.get(i).getDimension().width + stripFont.getSize() / 2;
     }
@@ -106,12 +115,12 @@ public class ConversionStrip {
     context.strokeWeight(1);
 
     if (drawSubText) {
-      context.rect(point.x, point.y - (dimension.height / 2) - 7, curWidth, dimension.height / 2 + 25);
+      context.rect(offsetPt.x, offsetPt.y - (dimension.height / 2) - 7, curWidth, dimension.height / 2 + 25);
       context.textFont(stripSubFont);
       context.fill(0.5f);
       context.text("Powered by Google Transliterate API", point.x + 5, point.y + (dimension.height / 2) + 3);
     } else {
-      context.rect(point.x, point.y - (dimension.height / 2) - 10, curWidth, dimension.height / 2 + 15);
+      context.rect(offsetPt.x, offsetPt.y - (dimension.height / 2) - 10, curWidth, dimension.height / 2 + 15);
     }
   }
 }

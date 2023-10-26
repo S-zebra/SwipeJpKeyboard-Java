@@ -225,7 +225,7 @@ public class Converter implements KeyEventListener {
   }
 
   void nextConvPart() {
-    if (focusedPos < convertResult.size() - 1) {
+    if (focusedPos < bunsetsuList.size() - 1) {
       focusedPos++;
       strip.setCandidates(bunsetsuList.get(focusedPos).getAllCandidates());
     }

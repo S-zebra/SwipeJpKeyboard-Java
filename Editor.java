@@ -61,11 +61,12 @@ public class Editor implements Editable, ConverterEventListener {
     for (int i = 0; i < textContent.length(); i++) {
       // サロゲートペアには対応しない
       char ch = textContent.charAt(i);
-      if (wrapLine && textLTPosition.x + offX > _width) {
+      int charWidth = fieldFont.getGlyph(ch).width + 5;
+      if (wrapLine && textLTPosition.x + offX + charWidth >= _width) {
         offY += fieldFont.getSize() + 4;
         offX = 0;
       } else {
-        offX += fieldFont.getGlyph(ch).width + 5;
+        offX += charWidth;
       }
       charPositions.add(new Point(textLTPosition.x + offX, textLTPosition.y + offY));
     }

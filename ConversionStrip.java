@@ -46,15 +46,12 @@ public class ConversionStrip {
 
     public void draw(Point point, PFont font) {
       context.textAlign(PGraphics.LEFT);
+      context.fill(0);
       if (highlighted) {
-        context.fill(0);
         context.rect(point.x, point.y - font.getSize(), dimension.width, dimension.height - 2);
         context.fill(255);
-      } else {
-        context.fill(0);
       }
       context.text(text, point.x, point.y);
-      context.fill(0);
     }
   }
 

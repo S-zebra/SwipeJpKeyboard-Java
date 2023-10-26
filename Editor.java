@@ -42,6 +42,7 @@ public class Editor implements Editable, ConverterEventListener {
   void draw() {
     context.textFont(fieldFont);
     context.textAlign(PApplet.LEFT);
+    context.fill(0);
     for (int i = 0; i < textContent.length(); i++) {
       Point cp = charPositions.get(i);
       context.text(textContent.charAt(i), cp.x, cp.y);

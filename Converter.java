@@ -219,7 +219,7 @@ public class Converter implements KeyEventListener {
       confirmedString.append(b.getCurrentString());
     }
     bunsetsuList.clear();
-    strip.setCandidates(Collections.emptyList());
+    strip.setCandidates(Collections.emptyList(), 0);
     focusedPos = 0;
     isReadyToConvert = false;
   }
@@ -227,14 +227,16 @@ public class Converter implements KeyEventListener {
   void nextConvPart() {
     if (focusedPos < bunsetsuList.size() - 1) {
       focusedPos++;
-      strip.setCandidates(bunsetsuList.get(focusedPos).getAllCandidates());
+      Bunsetsu b = bunsetsuList.get(focusedPos);
+      strip.setCandidates(b.getAllCandidates(), b.getCurrentIndex());
     }
   }
 
   void prevConvPart() {
     if (focusedPos >= 1) {
       focusedPos--;
-      strip.setCandidates(bunsetsuList.get(focusedPos).getAllCandidates());
+      Bunsetsu b = bunsetsuList.get(focusedPos);
+      strip.setCandidates(b.getAllCandidates(), b.getCurrentIndex());
     }
   }
 
@@ -259,7 +261,10 @@ public class Converter implements KeyEventListener {
 
   void draw() { //線だけ
     if (!isReadyToConvert) return;
+
+    // 現在注目中の文節の左下を取る
     Point p = targetEditor.getCharPositionBefore(getCvtString().length());
+
     // 1文字目の左下
     float curX = 0;
     for (int i = 0; i < bunsetsuList.size(); i++) {
@@ -316,6 +321,10 @@ class Bunsetsu {
 
   public String getCurrentString() {
     return currentString;
+  }
+
+  public int getCurrentIndex() {
+    return currentIndex;
   }
 
   public List<String> getAllCandidates() {

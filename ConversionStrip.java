@@ -14,6 +14,7 @@ public class ConversionStrip {
   private final PFont stripSubFont;
 
   private float xOffset = 0;
+  private int highlightedIndex;
 
   private static class Item {
     private final String text;
@@ -62,7 +63,7 @@ public class ConversionStrip {
     this.items = new ArrayList<>();
     this.stripFont = context.createFont("SansSerif", 16, true);
     this.stripSubFont = context.createFont("SansSerif", 12, true);
-    setCandidates(candidates);
+    setCandidates(candidates, 0);
   }
 
   public void focusNext() {
@@ -77,7 +78,7 @@ public class ConversionStrip {
     items.get(focusedItem).setHighlighted(true);
   }
 
-  public void setCandidates(List<String> candidates) {
+  public void setCandidates(List<String> candidates, int highlightedIndex) {
     items.clear();
     context.textFont(stripFont);
     float totalWidth = 0;
@@ -88,7 +89,7 @@ public class ConversionStrip {
     }
     this.dimension = new Dimension(totalWidth, context.textAscent() + context.textDescent());
     if (!items.isEmpty())
-      items.get(0).setHighlighted(true);
+      items.get(highlightedIndex).setHighlighted(true);
   }
 
   public void draw(Point point) {

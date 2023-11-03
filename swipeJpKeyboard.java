@@ -1,7 +1,5 @@
+import processing.core.PApplet;
 
-import processing.core.*;
-
-import javax.swing.*;
 import java.io.IOException;
 
 public class swipeJpKeyboard extends PApplet {

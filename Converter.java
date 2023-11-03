@@ -1,15 +1,6 @@
 import processing.core.PApplet;
 import processing.core.PFont;
-import processing.data.JSONArray;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,36 +9,20 @@ import java.util.List;
  * 変換機能
  */
 public class Converter implements KeyEventListener {
-
-  /**
-   * 変換APIのURL (Google transliterate API)
-   */
-  private static final String CONVERT_URL = "http://www.google.com/transliterate?langpair=ja-Hira%7Cja&text=";
-
   /**
    * 未確定文字列（ひらがな）
    */
   private StringBuilder unconfirmedString;
 
   /**
-   * 変換APIから返ってきたJSON<br>
-   * 例:
-   * <pre>
-   *  [
-   *   "も", ["も", "模", "藻", "喪", "裳"]],
-   *   "だむ", ["ダム", "打無", "DAM", "dam", "Dam"]]
-   *  ]
-   * </pre>
-   */
-  private JSONArray convertResult;
-
-  /**
    * 注目中の文節番号
    */
   private int focusedPos;
+
   // SKK的な変換をするかどうかのフラグ
   //  private boolean doesConvert;
   private ConverterEventListener listener;
+
   /**
    * 文字変換中、文字が変化したとき通知先Editable
    */
@@ -68,6 +43,9 @@ public class Converter implements KeyEventListener {
    */
   private final PApplet context;
 
+  /**
+   * 変換候補リスト
+   */
   private ConversionStrip strip;
 
   Converter(PApplet context) {
@@ -140,63 +118,12 @@ public class Converter implements KeyEventListener {
     return !getCvtString().isEmpty();
   }
 
+  /**
+   * 変換を開始する
+   */
   void beginConvert() {
-    /**
-     *
-     */
     int previousStrLength = unconfirmedString.toString().length();
-    URL url = null;
-    try {
-      url = new URL(CONVERT_URL + URLEncoder.encode(unconfirmedString.toString(), "UTF-8"));
-    } catch (MalformedURLException | UnsupportedEncodingException mue) {
-      mue.printStackTrace(); // bug
-    }
-    assert url != null;
-
-    HttpURLConnection conn = null;
-    try {
-      conn = (HttpURLConnection) url.openConnection();
-      conn.setConnectTimeout(2000);
-      conn.connect();
-    } catch (IOException ex) {
-      System.err.println("Cannot connect to the conversion server.");
-      ex.printStackTrace();
-    }
-    assert conn != null;
-
-    StringBuilder sb = new StringBuilder();
-    try {
-      BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-      String line;
-      while ((line = br.readLine()) != null) {
-        sb.append(line);
-      }
-      br.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
-    convertResult = JSONArray.parse(sb.toString());
-    System.out.println(sb.toString());
-    if (convertResult == null) {
-      endConvert();
-      // doesConvert = false;
-      return;
-    }
-
-    bunsetsuList = new ArrayList<>();
-    for (int i = 0; i < convertResult.size(); i++) {
-      JSONArray resBunsetsu = convertResult.getJSONArray(i);
-      String original = resBunsetsu.getString(0); // i番目の文節の変換前入力文字
-      JSONArray candidates = resBunsetsu.getJSONArray(1); // 候補のリスト
-      // ArrayListに移し替え
-      List<String> candidateList = new ArrayList<>();
-      for (int j = 0; j < candidates.size(); j++) {
-        candidateList.add(candidates.getString(j));
-      }
-      bunsetsuList.add(new Bunsetsu(original, candidateList));
-    }
-
+    bunsetsuList = new GoogleConvertAPI().convert(unconfirmedString.toString());
     listener.onStringChanged(previousStrLength, getCvtString());
     unconfirmedString = new StringBuilder();
     strip = new ConversionStrip(bunsetsuList.get(0).getAllCandidates(), context);
@@ -204,6 +131,11 @@ public class Converter implements KeyEventListener {
     // doesConvert = false
   }
 
+  /**
+   * 現在編集中の変換中文字列を返す
+   *
+   * @return 現在編集中の変換中文字列
+   */
   private String getCvtString() {
     StringBuilder sb = new StringBuilder();
     for (Bunsetsu b : bunsetsuList) {
@@ -212,32 +144,33 @@ public class Converter implements KeyEventListener {
     return sb.toString();
   }
 
+  /**
+   * 変換を終了し、変換中文節をクリアする
+   */
   void endConvert() {
     System.out.println("Convert ended");
-    StringBuilder confirmedString = new StringBuilder();
-    for (Bunsetsu b : bunsetsuList) {
-      confirmedString.append(b.getCurrentString());
-    }
     bunsetsuList.clear();
     strip.setCandidates(Collections.emptyList(), 0);
     focusedPos = 0;
     isReadyToConvert = false;
   }
 
+  /**
+   * 1つ次の文節を注目する
+   */
   void nextConvPart() {
-    if (focusedPos < bunsetsuList.size() - 1) {
-      focusedPos++;
-      Bunsetsu b = bunsetsuList.get(focusedPos);
-      strip.setCandidates(b.getAllCandidates(), b.getCurrentIndex());
-    }
+    focusedPos = Math.min(bunsetsuList.size() - 1, focusedPos + 1);
+    Bunsetsu b = bunsetsuList.get(focusedPos);
+    strip.setCandidates(b.getAllCandidates(), b.getCurrentIndex());
   }
 
+  /**
+   * 1つ前の文節を注目する
+   */
   void prevConvPart() {
-    if (focusedPos >= 1) {
-      focusedPos--;
-      Bunsetsu b = bunsetsuList.get(focusedPos);
-      strip.setCandidates(b.getAllCandidates(), b.getCurrentIndex());
-    }
+    focusedPos = Math.max(0, focusedPos - 1);
+    Bunsetsu b = bunsetsuList.get(focusedPos);
+    strip.setCandidates(b.getAllCandidates(), b.getCurrentIndex());
   }
 
   void nextCandidate() {
@@ -259,12 +192,16 @@ public class Converter implements KeyEventListener {
     strip.focusPrev();
   }
 
-  void draw() { //線だけ
+  /**
+   * 変換中文字列と変換候補リストをカーソル下部に描画する
+   */
+  void draw() {
     if (!isReadyToConvert) return;
 
     // 現在注目中の文節の左下を取る
     Point p = targetEditor.getCharPositionBefore(getCvtString().length());
 
+    // Editorが使用中のものと同じフォント／サイズで変換中文字列を描画する
     // 1文字目の左下
     float curX = 0;
     for (int i = 0; i < bunsetsuList.size(); i++) {
@@ -283,51 +220,5 @@ public class Converter implements KeyEventListener {
 
   void setEditable(Editable e) {
     this.targetEditor = e;
-  }
-}
-
-/**
- * 文節
- */
-class Bunsetsu {
-  private int currentIndex = 0;
-  private final String original;
-  private final List<String> candidates;
-  private String currentString;
-
-  public Bunsetsu(String original, List<String> candidates) {
-    this.original = original;
-    this.candidates = candidates;
-    if (original == null)
-      throw new IllegalArgumentException("Original should not be null");
-    if (candidates == null || candidates.isEmpty())
-      throw new IllegalArgumentException("Candidates should not be null or empty");
-    currentString = candidates.get(0);
-  }
-
-  public void reset() {
-    currentString = original;
-  }
-
-  public void nextCandidate() {
-    currentIndex = Math.min(candidates.size() - 1, currentIndex + 1);
-    currentString = candidates.get(currentIndex);
-  }
-
-  public void prevCandidate() {
-    currentIndex = Math.max(0, currentIndex - 1);
-    currentString = candidates.get(currentIndex);
-  }
-
-  public String getCurrentString() {
-    return currentString;
-  }
-
-  public int getCurrentIndex() {
-    return currentIndex;
-  }
-
-  public List<String> getAllCandidates() {
-    return candidates;
   }
 }

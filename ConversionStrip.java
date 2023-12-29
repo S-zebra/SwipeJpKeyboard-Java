@@ -107,7 +107,7 @@ public class ConversionStrip {
       items.get(i).draw(newPt, stripFont);
       curWidth += items.get(i).getDimension().width + stripFont.getSize() / 2;
     }
-    boolean drawSubText = false; // just for fun
+    boolean drawSubText = false; // just for fun :D
 
     context.noFill();
     context.strokeWeight(1);

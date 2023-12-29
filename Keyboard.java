@@ -1,14 +1,9 @@
 import processing.core.PApplet;
 import processing.core.PFont;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Keyboard {
 
@@ -130,7 +125,13 @@ public class Keyboard {
   }
 
   private List<List<AbstractKey>> parseLayoutFile(File file) throws IOException {
-    BufferedReader br = new BufferedReader(new FileReader(file));
+    BufferedReader br;
+    if (file.exists() && file.canRead()) {
+      br = new BufferedReader(new FileReader(file));
+    } else {
+      System.err.println(file.getAbsolutePath() + " not found. Using default key layout.");
+      br = new BufferedReader(new StringReader(DefaultKeyLayout.TABLE));
+    }
     List<List<AbstractKey>> keyLayout = new ArrayList<List<AbstractKey>>();
     String curLine;
     while ((curLine = br.readLine()) != null) {

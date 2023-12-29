@@ -9,6 +9,7 @@ public class swipeJpKeyboard extends PApplet {
 
   public void settings(){
     size(600, 400);
+    //    pixelDensity(2);
   }
 
   public void setup() {
